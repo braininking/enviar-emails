@@ -397,6 +397,9 @@ export default function App() {
                     setCurrentTab('campaigns');
                   }}
                   onGoToCampaigns={() => setCurrentTab('campaigns')}
+                  user={user}
+                  onConnectGmail={handleConnectGmail}
+                  onDisconnectGmail={handleDisconnectGmail}
                 />
               )}
 
