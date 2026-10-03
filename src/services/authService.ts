@@ -1,90 +1,92 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  User,
-  signOut,
-} from 'firebase/auth';
-import firebaseConfig from '../../firebase-applet-config.json';
 import { UserProfile } from '../types';
 
-// Initialize Firebase App
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+export interface GmailStatus {
+  connected: boolean;
+  email?: string;
+  name?: string;
+  picture?: string;
+}
 
-// Provider with workspace scopes for Gmail sending and profile
-export const SCOPES = [
-  'https://www.googleapis.com/auth/gmail.send',
-  'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/userinfo.profile',
-];
-
-const provider = new GoogleAuthProvider();
-SCOPES.forEach((scope) => provider.addScope(scope));
-
-// Force account picker and consent screen to ensure Gmail permission is granted
-provider.setCustomParameters({
-  prompt: 'consent select_account',
-  access_type: 'offline',
-});
-
-let isSigningIn = false;
-let cachedAccessToken: string | null = sessionStorage.getItem('curriculo_mail_access_token');
-
+/**
+ * Server-side Gmail OAuth 2.0.
+ *
+ * The browser never receives or stores the Gmail access/refresh token.
+ * The backend keeps the refresh token inside an encrypted HttpOnly cookie
+ * and obtains a fresh access token when an email needs to be sent.
+ */
 export const initAuth = (
-  onAuthSuccess?: (user: User, token: string) => void,
+  onAuthSuccess?: (profile: UserProfile) => void,
   onAuthFailure?: () => void
 ) => {
-  return onAuthStateChanged(auth, async (user: User | null) => {
-    if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else if (!isSigningIn) {
-        if (onAuthFailure) onAuthFailure();
+  let cancelled = false;
+
+  const loadStatus = async () => {
+    try {
+      const response = await fetch('/api/gmail/status', {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!response.ok) throw new Error('Falha ao consultar o Gmail.');
+
+      const status: GmailStatus = await response.json();
+
+      if (cancelled) return;
+
+      if (status.connected && status.email) {
+        onAuthSuccess?.({
+          email: status.email,
+          name: status.name || status.email.split('@')[0],
+          picture: status.picture,
+        });
+      } else {
+        onAuthFailure?.();
       }
-    } else {
-      cachedAccessToken = null;
-      sessionStorage.removeItem('curriculo_mail_access_token');
-      if (onAuthFailure) onAuthFailure();
+    } catch (error) {
+      console.error('[Gmail] Falha ao consultar status:', error);
+      if (!cancelled) onAuthFailure?.();
     }
+  };
+
+  void loadStatus();
+
+  return () => {
+    cancelled = true;
+  };
+};
+
+/**
+ * Starts the OAuth authorization-code flow on the server.
+ * Google handles the account selection and consent screen.
+ */
+export const googleSignIn = async (): Promise<null> => {
+  window.location.assign('/api/gmail/oauth/start');
+  return null;
+};
+
+export const getGmailStatus = async (): Promise<GmailStatus> => {
+  const response = await fetch('/api/gmail/status', {
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
   });
-};
 
-export const googleSignIn = async (): Promise<{ user: User; accessToken: string; profile: UserProfile } | null> => {
-  try {
-    isSigningIn = true;
-    const result = await signInWithPopup(auth, provider);
-    const credential = GoogleAuthProvider.credentialFromResult(result);
-    if (!credential?.accessToken) {
-      throw new Error('Não foi possível obter o token de acesso do Google OAuth. Verifique se autorizou o envio de e-mails.');
-    }
-    cachedAccessToken = credential.accessToken;
-    sessionStorage.setItem('curriculo_mail_access_token', credential.accessToken);
-    const profile: UserProfile = {
-      email: result.user.email || '',
-      name: result.user.displayName || result.user.email?.split('@')[0] || 'Usuário',
-      picture: result.user.photoURL || undefined,
-    };
-    return { user: result.user, accessToken: cachedAccessToken, profile };
-  } catch (error: any) {
-    console.error('Erro ao conectar Gmail via OAuth:', error);
-    throw error;
-  } finally {
-    isSigningIn = false;
+  if (!response.ok) {
+    throw new Error('Não foi possível consultar o status do Gmail.');
   }
-};
 
-export const getAccessToken = async (): Promise<string | null> => {
-  if (!cachedAccessToken) {
-    cachedAccessToken = sessionStorage.getItem('curriculo_mail_access_token');
-  }
-  return cachedAccessToken;
+  return response.json();
 };
 
 export const logout = async (): Promise<void> => {
-  await signOut(auth);
-  cachedAccessToken = null;
-  sessionStorage.removeItem('curriculo_mail_access_token');
+  const response = await fetch('/api/gmail/disconnect', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Não foi possível desconectar o Gmail.');
+  }
 };
