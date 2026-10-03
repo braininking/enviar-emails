@@ -20,7 +20,6 @@ import {
   initAuth,
   googleSignIn,
   logout,
-  getAccessToken,
 } from './services/authService';
 import {
   getCampaigns,
@@ -72,12 +71,8 @@ export default function App() {
 
     // Init Firebase Auth
     const unsubscribe = initAuth(
-      (firebaseUser) => {
-        setUser({
-          email: firebaseUser.email || '',
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Usuário',
-          picture: firebaseUser.photoURL || undefined,
-        });
+      (profile) => {
+        setUser(profile);
       },
       () => {
         // Not authenticated
@@ -89,17 +84,29 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const gmailResult = params.get('gmail');
+    const reason = params.get('reason');
+
+    if (gmailResult === 'error') {
+      window.history.replaceState({}, '', window.location.pathname);
+      alert(`Não foi possível conectar o Gmail: ${reason ? decodeURIComponent(reason) : 'erro desconhecido'}`);
+    } else if (gmailResult === 'denied') {
+      window.history.replaceState({}, '', window.location.pathname);
+      alert('A autorização do Gmail foi cancelada.');
+    } else if (gmailResult === 'connected') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const handleConnectGmail = async () => {
     try {
       setIsConnecting(true);
-      const res = await googleSignIn();
-      if (res) {
-        setUser(res.profile);
-      }
+      await googleSignIn();
     } catch (err: any) {
-      alert(`Não foi possível conectar ao Gmail: ${err.message || err}`);
-    } finally {
       setIsConnecting(false);
+      alert(`Não foi possível conectar ao Gmail: ${err.message || err}`);
     }
   };
 
@@ -151,8 +158,6 @@ export default function App() {
     isCancelledRef.current = false;
     let current = { ...campaignData };
     const recipientsList = [...current.recipients];
-    const token = await getAccessToken();
-
     for (let i = startIndex; i < recipientsList.length; i++) {
       // Check for pause
       if (isPausedRef.current) {
@@ -198,20 +203,14 @@ export default function App() {
       const personalizedBody = personalizeText(current.message, target);
 
       try {
-        if (token) {
-          // Real Gmail API call
-          const rawBase64Url = createMimeMessage({
-            to: target.email,
-            from: current.senderEmail,
-            subject: personalizedSubj,
-            bodyPlain: personalizedBody,
-            attachments: current.attachments,
-          });
-          await sendGmailMessage({ accessToken: token, rawBase64Url });
-        } else {
-          // Controlled simulation delay (e.g. 600ms) if in preview mode without token
-          await new Promise((r) => setTimeout(r, 600));
-        }
+        const rawBase64Url = createMimeMessage({
+          to: target.email,
+          from: current.senderEmail,
+          subject: personalizedSubj,
+          bodyPlain: personalizedBody,
+          attachments: current.attachments,
+        });
+        await sendGmailMessage({ rawBase64Url });
 
         // Mark as success
         recipientsList[i] = {
@@ -224,9 +223,9 @@ export default function App() {
       } catch (err: any) {
         console.error(`Erro ao enviar para ${target.email}:`, err);
         const errMsg = err.message || '';
-        const userFriendlyError = errMsg.includes('insufficient authentication scopes')
-          ? 'Permissão de envio não concedida no Google. Clique em "Reautorizar Gmail" e marque a caixa de envio.'
-          : (errMsg || 'Erro ao comunicar com a Gmail API');
+        const userFriendlyError = err?.code === 'GMAIL_REAUTH_REQUIRED'
+          ? 'A autorização do Gmail expirou ou foi revogada. Conecte o Gmail novamente.'
+          : (errMsg || 'Erro ao comunicar com o Gmail.');
 
         recipientsList[i] = {
           ...recipientsList[i],
@@ -398,6 +397,9 @@ export default function App() {
                     setCurrentTab('campaigns');
                   }}
                   onGoToCampaigns={() => setCurrentTab('campaigns')}
+                  user={user}
+                  onConnectGmail={handleConnectGmail}
+                  onDisconnectGmail={handleDisconnectGmail}
                 />
               )}
 

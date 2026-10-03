@@ -16,7 +16,6 @@ import { CampaignConfirmationModal } from '../components/CampaignConfirmationMod
 import { parsePastedEmails } from '../services/contactService';
 import { getTemplates } from '../services/templateService';
 import { createMimeMessage, sendGmailMessage, personalizeText } from '../services/gmailService';
-import { getAccessToken } from '../services/authService';
 
 interface NewCampaignPageProps {
   user: UserProfile | null;
@@ -174,7 +173,6 @@ export const NewCampaignPage: React.FC<NewCampaignPageProps> = ({
       attachments,
     });
 
-    const token = await getAccessToken();
     if (token) {
       await sendGmailMessage({ accessToken: token, rawBase64Url });
     } else {

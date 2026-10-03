@@ -130,28 +130,31 @@ export function createMimeMessage({
  * Send an email directly via Google Gmail API v1
  */
 export async function sendGmailMessage({
-  accessToken,
   rawBase64Url,
 }: {
-  accessToken: string;
   rawBase64Url: string;
 }): Promise<{ id: string; threadId: string }> {
-  const response = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+  // The access token is deliberately kept server-side.
+  // The backend refreshes it from the encrypted HttpOnly Gmail session cookie.
+  const response = await fetch('/api/gmail/send', {
     method: 'POST',
+    credentials: 'include',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
+      Accept: 'application/json',
     },
     body: JSON.stringify({
-      raw: rawBase64Url,
+      rawBase64Url,
     }),
   });
 
+  const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error?.message || `Erro HTTP ${response.status}: ${response.statusText}`;
-    throw new Error(errorMessage);
+    const error = new Error(data.error || `Erro HTTP ${response.status}: ${response.statusText}`);
+    (error as any).code = data.code;
+    throw error;
   }
 
-  return response.json();
+  return data;
 }
