@@ -10,20 +10,29 @@ import {
   Inbox,
   ShieldCheck,
   CheckCircle2,
+  Mail,
+  ShieldCheck,
 } from 'lucide-react';
 import { Campaign } from '../types';
 import { getDashboardStats } from '../services/campaignService';
+import { UserProfile } from '../types';
 
 interface DashboardPageProps {
   onNewCampaign: () => void;
   onViewCampaign: (campaign: Campaign) => void;
   onGoToCampaigns: () => void;
+  user: UserProfile | null;
+  onConnectGmail: () => void;
+  onDisconnectGmail: () => void;
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({
   onNewCampaign,
   onViewCampaign,
   onGoToCampaigns,
+  user,
+  onConnectGmail,
+  onDisconnectGmail,
 }) => {
   const stats = getDashboardStats();
 
@@ -63,6 +72,49 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
         {/* Decorative background shape */}
         <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-400 to-transparent pointer-events-none" />
+      </div>
+
+      {/* Gmail connection panel */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="flex items-start gap-4">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${user ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
+              {user ? <ShieldCheck className="w-5 h-5" /> : <Mail className="w-5 h-5" />}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white">Sua conta de envio</h3>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${user ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                  {user ? 'Conectado' : 'Aguardando conexão'}
+                </span>
+              </div>
+              {user ? (
+                <p className="text-xs text-slate-400 mt-1">
+                  Os envios serão feitos pela conta <strong className="text-slate-200">{user.email}</strong>. O token fica protegido no servidor e é renovado automaticamente quando necessário.
+                </p>
+              ) : (
+                <p className="text-xs text-slate-400 mt-1">
+                  Conecte seu Gmail para enviar currículos pela sua própria conta. O Google exibirá a tela oficial de autorização.
+                </p>
+              )}
+            </div>
+          </div>
+          {user ? (
+            <button
+              onClick={onDisconnectGmail}
+              className="px-4 py-2.5 bg-slate-950 hover:bg-slate-800 text-rose-300 border border-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+            >
+              Desconectar
+            </button>
+          ) : (
+            <button
+              onClick={onConnectGmail}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-blue-600/20 transition-all cursor-pointer"
+            >
+              Conectar Gmail
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Estatísticas Grid */}
