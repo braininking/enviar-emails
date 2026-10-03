@@ -360,6 +360,31 @@ router.post('/send', async (req, res) => {
     return;
   }
 
+  // Gmail's message size limit is 25 MB. The raw field is base64url encoded,
+  // so validate the decoded RFC 2822 message before sending it upstream.
+  let rawMime: string;
+  try {
+    rawMime = Buffer.from(rawBase64Url, 'base64url').toString('utf8');
+  } catch {
+    res.status(400).json({ error: 'Mensagem MIME inválida.' });
+    return;
+  }
+
+  const rawMimeBytes = Buffer.byteLength(rawMime, 'utf8');
+  if (rawMimeBytes > 25 * 1024 * 1024) {
+    res.status(413).json({ error: 'A mensagem, incluindo anexos, ultrapassa o limite de 25 MB do Gmail.' });
+    return;
+  }
+
+  const fromMatch = rawMime.match(/^From:\s*(.+)$/im);
+  if (!fromMatch || fromMatch[1].trim().toLowerCase() !== session.email.trim().toLowerCase()) {
+    res.status(403).json({
+      error: 'O remetente da mensagem não corresponde à conta Gmail conectada.',
+      code: 'GMAIL_SENDER_MISMATCH',
+    });
+    return;
+  }
+
   try {
     const tokens = await refreshAccessToken(session.refreshToken);
 
