@@ -290,7 +290,7 @@ export const VagasSearchPage: React.FC<VagasSearchPageProps> = ({ onSendToCampai
             Pesquise vagas abertas e envie currículos direto pelo Gmail
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            Varra publicações do portal Themos Vagas em tempo real, extraia os e-mails de RH e recrutamento de Teresina, Piauí e Maranhão, e transfira para o disparador de campanhas com um único clique.
+            Varra publicações do portal Themos Vagas em tempo real, encontre vagas, empresas e contatos públicos de RH/recrutamento em qualquer cidade do Brasil, e transfira para o disparador de campanhas com um único clique.
           </p>
         </div>
       </div>
