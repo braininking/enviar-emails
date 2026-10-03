@@ -23,15 +23,15 @@ aiSearchRouter.get('/web', async (req: Request, res: Response) => {
     return;
   }
 
-  const cityText = cities.length ? cities.join(', ') : 'Piauí e Maranhão';
+  const cityText = cities.length ? cities.join(', ') : 'cidade não informada';
   const prompt = `Pesquise na internet por vagas de emprego PUBLICADAS recentemente para o cargo/profissão: "${term}".
 Priorize vagas reais e abertas, com foco nestas cidades: ${cityText}.
 Pesquise em múltiplos sites e portais de emprego, páginas de empresas, LinkedIn público, Indeed, Gupy, InfoJobs, Catho, sites locais e páginas de recrutamento.
 Não invente vagas, URLs, empresas ou e-mails. Só retorne dados encontrados nas páginas pesquisadas.
 Para cada resultado, tente identificar: cargo, empresa, cidade/UF, data de publicação (se disponível), URL da vaga, e-mail de candidatura/recrutamento (se estiver publicamente disponível) e um resumo.
 Retorne SOMENTE JSON válido no formato:
-{"results":[{"title":"","company":"","city":"","state":"","publishedDate":"","url":"","email":"","snippet":"","source":""}]}
-Limite a 50 resultados mais relevantes.`;
+{"results":[{"title":"","company":"","city":"","state":"","publishedDate":"","url":"","emails":[],"email":"","snippet":"","source":""}]}
+Pesquise também contatos públicos de RH/recrutamento/trabalhe conosco da mesma empresa. Não invente e-mails. Se houver vários e-mails públicos da mesma empresa, mantenha todos. Uma empresa pode ser incluída mesmo que a vaga não tenha e-mail, desde que exista evidência pública da oportunidade. Restrinja estritamente à cidade/UF solicitada. Retorne no máximo 100 resultados.`;
 
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`, {
