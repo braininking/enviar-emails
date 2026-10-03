@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { jobsRouter } from './server/routes/jobsRouter.ts';
 import { gmailRouter } from './server/routes/gmailRouter.ts';
+import { aiSearchRouter } from './server/routes/aiSearchRouter.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,6 +49,7 @@ async function startServer() {
 
   // API router for job extraction & search
   app.use('/api/jobs', jobsRouter);
+  app.use('/api/ai-search', aiSearchRouter);
 
   if (isProduction && hasDist) {
     // Serve production static build
