@@ -33,7 +33,7 @@ async function startServer() {
   // If in development, bind to port 3000 as required by AI Studio
   const PORT = cliPort || (isProduction ? parseInt(process.env.PORT || '8080', 10) : 3000);
 
-  // MIME messages can contain PDF attachments, so allow payloads close to Gmail's 25 MB limit.\n  app.use(express.json({ limit: '25mb' }));
+  // MIME messages can contain PDF attachments, so allow payloads close to Gmail's 25 MB limit.\n  app.use(express.json({ limit: '40mb' }));
 
   // Health check endpoint
   app.get('/api/health', (req, res) => {
