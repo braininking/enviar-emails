@@ -1,0 +1,8 @@
+{
+  "name": "Remix Vagas Email Finder",
+  "description": "Encontre e-mails de candidatura publicados nas vagas do Themos Vagas com facilidade, rapidez e precisão.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
