@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { AIWebSearchPanel } from '../components/AIWebSearchPanel';
 import {
   Mail,
   Search,
@@ -325,6 +326,8 @@ export const VagasSearchPage: React.FC<VagasSearchPageProps> = ({ onSendToCampai
           relatedTerms={relatedTerms}
           currentTerm={term}
         />
+
+        <AIWebSearchPanel term={term} cities={selectedCities} onSendToCampaign={onSendToCampaign} />
       </div>
 
       {/* Progress Tracker */}
