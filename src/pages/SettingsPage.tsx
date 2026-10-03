@@ -44,13 +44,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       desc: 'Vá em "APIs e serviços" > "Tela de permissão OAuth". Escolha tipo "Externo" (External). Digite o nome do app ("Currículo Mail") e seu e-mail. Adicione os escopos "gmail.send" e "userinfo.email". Em "Usuários de teste", adicione seu próprio endereço de e-mail.',
     },
     {
-      title: 'Passo 5: Criar Credenciais OAuth (Client ID & Secret)',
-      desc: 'Vá em "APIs e serviços" > "Credenciais" > "+ Criar credenciais" > "ID do cliente OAuth". Escolha "Aplicativo da Web". Em "URIs de redirecionamento autorizados", cole a URL do seu app. Clique em Criar.',
+      title: 'Passo 5: Criar Credenciais OAuth (Aplicativo da Web)',
+      desc: 'Vá em "Google Auth Platform" > "Clients" e crie um cliente OAuth do tipo "Web application". Em "Authorized redirect URIs", cadastre exatamente a URL do callback do servidor: https://SEU-DOMINIO/api/gmail/oauth/callback.',
     },
     {
-      title: 'Passo 6: Copiar o ID e o Segredo',
-      desc: 'O Google exibirá uma janela com "Seu ID de cliente" (GOOGLE_CLIENT_ID) e "Seu segredo do cliente" (GOOGLE_CLIENT_SECRET). Basta copiá-los!',
-      code: `GOOGLE_CLIENT_ID=xxxxxxxxxxxx-xxxxxxxxxxxxxxxx.apps.googleusercontent.com\nGOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxx\nGOOGLE_REDIRECT_URI=https://seu-app-url.run.app`,
+      title: 'Passo 6: Configurar os Secrets do servidor',
+      desc: 'Não coloque o Client Secret no GitHub. Cadastre os valores nos Secrets do ambiente de execução.',
+      code: `GMAIL_CLIENT_ID=xxxxxxxxxxxx-xxxxxxxxxxxxxxxx.apps.googleusercontent.com\nGMAIL_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxxxxxxxxxx\nGMAIL_REDIRECT_URI=https://seu-app-url.run.app/api/gmail/oauth/callback\nGMAIL_SESSION_SECRET=uma-chave-longa-e-aleatoria`,
     },
   ];
 
@@ -85,7 +85,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             </div>
             <div>
               <h3 className="text-sm font-bold text-white">Status da Conexão Gmail</h3>
-              <p className="text-xs text-slate-400">Autenticação oficial via Google Identity</p>
+              <p className="text-xs text-slate-400">OAuth 2.0 no servidor • renovação automática da autorização</p>
             </div>
           </div>
           {user ? (
