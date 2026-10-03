@@ -20,7 +20,6 @@ import {
   initAuth,
   googleSignIn,
   logout,
-  getAccessToken,
 } from './services/authService';
 import {
   getCampaigns,
