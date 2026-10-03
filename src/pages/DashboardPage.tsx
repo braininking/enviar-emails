@@ -11,11 +11,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   Mail,
-  ShieldCheck,
 } from 'lucide-react';
-import { Campaign } from '../types';
+import { Campaign, UserProfile } from '../types';
 import { getDashboardStats } from '../services/campaignService';
-import { UserProfile } from '../types';
 
 interface DashboardPageProps {
   onNewCampaign: () => void;
